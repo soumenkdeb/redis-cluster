@@ -1,7 +1,7 @@
 version: "3.9"
 
 x-redis-common: &redis-common
-  image: docker.io/library/redis:7.2-alpine
+  image: docker.io/library/redis:8.6-alpine
   restart: unless-stopped
   networks:
     - redis-cluster-net
