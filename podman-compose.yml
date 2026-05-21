@@ -1,0 +1,203 @@
+version: "3.9"
+
+x-redis-common: &redis-common
+  image: docker.io/library/redis:7.2-alpine
+  restart: unless-stopped
+  networks:
+    - redis-cluster-net
+  volumes:
+    - ./redis-data/${NODE_NAME:-default}:/data:Z   # :Z for SELinux compatibility (important on Fedora/RHEL)
+
+services:
+  redis-node-1:
+    <<: *redis-common
+    container_name: redis-node-1
+    environment:
+      - NODE_NAME=node-1
+    ports:
+      - "6379:6379"
+      - "16379:16379"
+    command: >
+      redis-server
+      --port 6379
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.11
+      --cluster-announce-port 6379
+      --cluster-announce-bus-port 16379
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-node-2:
+    <<: *redis-common
+    container_name: redis-node-2
+    environment:
+      - NODE_NAME=node-2
+    ports:
+      - "6380:6380"
+      - "16380:16380"
+    command: >
+      redis-server
+      --port 6380
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.12
+      --cluster-announce-port 6380
+      --cluster-announce-bus-port 16380
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.12
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-node-3:
+    <<: *redis-common
+    container_name: redis-node-3
+    environment:
+      - NODE_NAME=node-3
+    ports:
+      - "6381:6381"
+      - "16381:16381"
+    command: >
+      redis-server
+      --port 6381
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.13
+      --cluster-announce-port 6381
+      --cluster-announce-bus-port 16381
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.13
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-node-4:
+    <<: *redis-common
+    container_name: redis-node-4
+    environment:
+      - NODE_NAME=node-4
+    ports:
+      - "6382:6382"
+      - "16382:16382"
+    command: >
+      redis-server
+      --port 6382
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.14
+      --cluster-announce-port 6382
+      --cluster-announce-bus-port 16382
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.14
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6382", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-node-5:
+    <<: *redis-common
+    container_name: redis-node-5
+    environment:
+      - NODE_NAME=node-5
+    ports:
+      - "6383:6383"
+      - "16383:16383"
+    command: >
+      redis-server
+      --port 6383
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.15
+      --cluster-announce-port 6383
+      --cluster-announce-bus-port 16383
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.15
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6383", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis-node-6:
+    <<: *redis-common
+    container_name: redis-node-6
+    environment:
+      - NODE_NAME=node-6
+    ports:
+      - "6384:6384"
+      - "16384:16384"
+    command: >
+      redis-server
+      --port 6384
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --cluster-announce-ip 172.20.0.16
+      --cluster-announce-port 6384
+      --cluster-announce-bus-port 16384
+      --appendonly yes
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.16
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6384", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redisinsight:
+    image: docker.io/redis/redisinsight:latest
+    container_name: redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight-data:/data
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.20.0.20
+    depends_on:
+      redis-node-1:
+        condition: service_healthy
+
+volumes:
+  redisinsight-data:
+
+networks:
+  redis-cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
